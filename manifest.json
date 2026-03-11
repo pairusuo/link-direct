@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "一键跳转助手 (Link Direct)",
+  "version": "1.0.0",
+  "description": "解除微信的外部链接跳转限制，一键复制URL和直接跳转访问。",
+  "permissions": ["clipboardWrite"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://weixin110.qq.com/cgi-bin/mmspamsupport-bin/newredirectconfirmcgi*"
+      ],
+      "js": ["src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_end"
+    }
+  ]
+}
