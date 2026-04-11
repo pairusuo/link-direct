@@ -1,13 +1,55 @@
-function extractUrl() {
-  // Try to find URL in text content
-  const textContent = document.body.innerText || document.body.textContent;
+function isHttpUrl(value) {
+  if (!value) return false;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function extractUrlFromCgiData() {
+  for (const script of document.scripts) {
+    const content = script.textContent || "";
+    const match = content.match(/var\s+cgiData\s*=\s*(\{[\s\S]*?\});/);
+    if (!match) continue;
+
+    try {
+      const cgiData = JSON.parse(match[1]);
+      const candidateLinks = Array.isArray(cgiData.links) ? cgiData.links : [];
+
+      for (const link of candidateLinks) {
+        if (typeof link?.url !== "string") continue;
+
+        const parsedLink = new URL(link.url, window.location.href);
+        const encodedTarget = parsedLink.searchParams.get("url");
+        if (!encodedTarget) continue;
+
+        const decodedTarget = atob(encodedTarget);
+        if (isHttpUrl(decodedTarget)) {
+          return decodedTarget;
+        }
+      }
+    } catch (error) {
+      console.error("Failed to parse cgiData", error);
+    }
+  }
+
+  return null;
+}
+
+function extractUrlFromText() {
+  const textContent = document.body.innerText || document.body.textContent || "";
   const match = textContent.match(
     /https?:\/\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=%]+/,
   );
-  if (match) {
-    return match[0];
-  }
-  return null;
+
+  return match ? match[0] : null;
+}
+
+function extractUrl() {
+  return extractUrlFromCgiData() || extractUrlFromText();
 }
 
 function initWeChatSkipper() {
@@ -54,16 +96,13 @@ function initWeChatSkipper() {
   container.appendChild(copyBtn);
   container.appendChild(goBtn);
 
-  // Try to insert after the description paragraph (.weui-msg__desc) for best placement
-  const descElems = document.querySelectorAll(".weui-msg__desc, p");
+  // Prefer the main description block even when the page does not print the URL.
+  const descElem = document.querySelector(".weui-msg__desc, p");
   let inserted = false;
 
-  for (const elem of descElems) {
-    if (elem.innerText && elem.innerText.includes(targetUrl)) {
-      elem.parentNode.insertBefore(container, elem.nextSibling);
-      inserted = true;
-      break;
-    }
+  if (descElem?.parentNode) {
+    descElem.parentNode.insertBefore(container, descElem.nextSibling);
+    inserted = true;
   }
 
   if (!inserted) {

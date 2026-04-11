@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "一键跳转助手 (Link Direct)",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "解除微信的外部链接跳转限制，一键复制URL和直接跳转访问。",
   "permissions": ["clipboardWrite"],
   "icons": {
